@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <title>W/P Hot Print</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0e0e0e;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      position: relative;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    /* Thin RGB Border */
+    .container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, violet, red);
+      background-size: 300% 300%;
+      animation: moveBorder 6s linear infinite;
+      z-index: -1;
+      padding: 2px;
+      border-radius: 18px;
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+    }
+
+    @keyframes moveBorder {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #00ffd5;
+    }
+
+    label {
+      font-size: 14px;
+      margin-bottom: 5px;
+      display: block;
+      color: #ccc;
+    }
+
+    .input-group {
+      position: relative;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 40px 12px 12px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    input::placeholder {
+      color: #aaa;
+    }
+
+    .mic-btn {
+      position: absolute;
+      right: 10px;
+      top: 8px;
+      background: none;
+      border: none;
+      color: #00ffd5;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      background-color: #00ffd5;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #00ccaa;
+    }
+
+    .reset-btn {
+      background-color: #ff4d4d;
+      color: #fff;
+    }
+
+    .reset-btn:hover {
+      background-color: #e60000;
+    }
+
+    #result {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 17px;
+      color: #00ff88;
+    }
+
+    .loader {
+      border: 5px solid #333;
+      border-top: 5px solid #00ffd5;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <img src="file:///storage/emulated/0/yeasin/33.png" alt="Yeasin Photo">
+    <h2>W/P Hot Print</h2>
+
+    <label for="workers">মানুষের সংখ্যা:</label>
+    <div class="input-group">
+      <input type="number" id="workers" placeholder="যেমন: ২">
+      <button class="mic-btn" onclick="startVoiceInput('workers')">🎤</button>
+    </div>
+
+    <label for="hours">মোট ঘণ্টা:</label>
+    <div class="input-group">
+      <input type="number" id="hours" placeholder="যেমন: ৫">
+      <button class="mic-btn" onclick="startVoiceInput('hours')">🎤</button>
+    </div>
+
+    <label for="lostMinutes">নষ্ট সময় (মিনিট):</label>
+    <div class="input-group">
+      <input type="number" id="lostMinutes" placeholder="যেমন: ১৫">
+      <button class="mic-btn" onclick="startVoiceInput('lostMinutes')">🎤</button>
+    </div>
+
+    <div class="button-group">
+      <button onclick="calculate()">উৎপাদন দেখাও</button>
+      <button class="reset-btn" onclick="resetForm()">রিসেট</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    function calculate() {
+      const workers = parseFloat(document.getElementById("workers").value);
+      const hours = parseFloat(document.getElementById("hours").value);
+      const lostMinutes = parseFloat(document.getElementById("lostMinutes").value);
+
+      if (isNaN(workers) || isNaN(hours) || isNaN(lostMinutes)) {
+        document.getElementById("result").innerHTML = "<span style='color:red;'>সব ঘর পূরণ করো।</span>";
+        return;
+      }
+
+      document.getElementById("result").innerHTML = '<div class="loader"></div>';
+
+      setTimeout(() => {
+        let rate = 0;
+
+        if (workers === 2) {
+          rate = 58.75;
+        } else if (workers === 3) {
+          rate = 81.25;
+        } else {
+          const ratePerPerson = (81.25 - 58.75);
+          rate = 58.75 + (workers - 2) * ratePerPerson;
+        }
+
+        const totalProduct = rate * hours;
+        const lostHours = lostMinutes / 60;
+        const lostProduct = rate * lostHours;
+        const finalProduct = totalProduct - lostProduct;
+
+        document.getElementById("result").innerHTML = `
+          মোট উৎপাদন: ${totalProduct.toFixed(2)} পিস<br>
+          ক্ষতিগ্রস্ত প্রোডাক্ট: ${lostProduct.toFixed(2)} পিস<br>
+          <strong>সর্বশেষ উৎপাদন: ${finalProduct.toFixed(2)} পিস</strong>
+        `;
+      }, 1500);
+    }
+
+    function resetForm() {
+      document.getElementById("workers").value = "";
+      document.getElementById("hours").value = "";
+      document.getElementById("lostMinutes").value = "";
+      document.getElementById("result").innerHTML = "";
+    }
+
+    function startVoiceInput(id) {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'bn-BD';
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        const number = parseFloat(transcript.replace(/[^\d.]/g, ''));
+        document.getElementById(id).value = number || '';
+      };
+
+      recognition.start();
+    }
+  </script>
+
+</body>
+</html>
