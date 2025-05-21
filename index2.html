@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Islamic Quiz Game</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #121212;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+      margin: 0;
+    }
+    .quiz-container {
+      background: #1f1f1f;
+      padding: 30px;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 0 15px #00ffaa;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    #timer {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #ffcc00;
+    }
+    .option {
+      background: #333;
+      padding: 12px 20px;
+      margin: 10px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+      user-select: none;
+    }
+    .option:hover {
+      background: #444;
+    }
+    .option.correct {
+      background: #28a745 !important;
+      color: white;
+    }
+    .option.wrong {
+      background: #dc3545 !important;
+      color: white;
+    }
+    #next-btn {
+      margin-top: 20px;
+      padding: 12px 25px;
+      font-size: 18px;
+      background: #006400;
+      border: none;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      display: none;
+    }
+    #result {
+      font-size: 20px;
+      margin-top: 30px;
+      color: #00ffff;
+      display: none;
+    }
+    #final-message {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 15px;
+      color: #ffcc00;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div id="timer">সময় বাকি: 10 সেকেন্ড</div>
+    <h2 id="question">প্রশ্ন</h2>
+    <div id="options"></div>
+    <button id="next-btn" onclick="nextQuestion()">পরবর্তী প্রশ্ন</button>
+    <div id="result"></div>
+    <div id="final-message"></div>
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        question: "কোরআনের প্রথম সূরার নাম কী?",
+        options: ["আল ফাতিহা", "আল বাকারা", "আল ইখলাস", "আল ফালাক"],
+        answer: "আল ফাতিহা"
+      },
+      {
+        question: "রাসূল (সঃ) কোথায় জন্মগ্রহণ করেন?",
+        options: ["মদিনা", "মক্কা", "তাইফ", "সানআ"],
+        answer: "মক্কা"
+      },
+      {
+        question: "হজ্ব অনুষ্ঠিত হয় কোন মাসে?",
+        options: ["রজব", "রমজান", "যিলহজ্জ", "মুহাররম"],
+        answer: "যিলহজ্জ"
+      },
+      {
+        question: "মোট ফরজ নামাজে রাকাত সংখ্যা কত?",
+        options: ["১৭", "২০", "১৫", "১২"],
+        answer: "১৭"
+      },
+      {
+        question: "নবী (সঃ) এর প্রথম স্ত্রী কে ছিলেন?",
+        options: ["আয়েশা (রাঃ)", "হাফসা (রাঃ)", "খাদিজা (রাঃ)", "সাওদা (রাঃ)"],
+        answer: "খাদিজা (রাঃ)"
+      },
+      {
+        question: "কোরআনে কতটি সূরা আছে?",
+        options: ["১১৪", "১২০", "১০৫", "১০০"],
+        answer: "১১৪"
+      },
+      {
+        question: "রাসূল (সঃ) এর পবিত্র হিজরতের শহর কোনটি?",
+        options: ["বদর", "তাইফ", "মদিনা", "শাম"],
+        answer: "মদিনা"
+      },
+      {
+        question: "রোজা ফরজ হয় কোন মাসে?",
+        options: ["রজব", "শাবান", "রমজান", "যিলহজ্জ"],
+        answer: "রমজান"
+      },
+      {
+        question: "কোন ফেরেশতা ওহি নিয়ে আসতেন?",
+        options: ["জিবরাইল", "ইসরাফিল", "আজরাইল", "মিকাইল"],
+        answer: "জিবরাইল"
+      },
+      {
+        question: "নামায ইসলামের কোন স্তম্ভ?",
+        options: ["১ম", "২য়", "৩য়", "৪র্থ"],
+        answer: "২য়"
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let correctCount = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 10;
+
+    const timerEl = document.getElementById("timer");
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const nextBtn = document.getElementById("next-btn");
+    const resultEl = document.getElementById("result");
+    const finalMessage = document.getElementById("final-message");
+
+    function startTimer() {
+      timeLeft = 10;
+      timerEl.textContent = `সময় বাকি: ${timeLeft} সেকেন্ড`;
+      timer = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `সময় বাকি: ${timeLeft} সেকেন্ড`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          showCorrectAnswer();
+          nextBtn.style.display = "inline-block";
+        }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      nextBtn.style.display = "none";
+      resultEl.style.display = "none";
+      finalMessage.style.display = "none";
+
+      const current = quizData[currentQuestionIndex];
+      questionEl.textContent = current.question;
+
+      optionsEl.innerHTML = "";
+      current.options.forEach(opt => {
+        const div = document.createElement("div");
+        div.classList.add("option");
+        div.textContent = opt;
+        div.onclick = () => selectOption(div, opt);
+        optionsEl.appendChild(div);
+      });
+
+      startTimer();
+    }
+
+    function selectOption(selectedDiv, selectedOption) {
+      clearInterval(timer);
+      const correctAnswer = quizData[currentQuestionIndex].answer;
+      const options = document.querySelectorAll(".option");
+
+      options.forEach(opt => opt.onclick = null);
+
+      if (selectedOption === correctAnswer) {
+        selectedDiv.classList.add("correct");
+        correctCount++;
+        score += 10;
+      } else {
+        selectedDiv.classList.add("wrong");
+        score -= 10;
+        options.forEach(opt => {
+          if (opt.textContent === correctAnswer) {
+            opt.classList.add("correct");
+          }
+        });
+      }
+
+      nextBtn.style.display = "inline-block";
+    }
+
+    function showCorrectAnswer() {
+      const correctAnswer = quizData[currentQuestionIndex].answer;
+      const options = document.querySelectorAll(".option");
+
+      options.forEach(opt => {
+        if (opt.textContent === correctAnswer) {
+          opt.classList.add("correct");
+        }
+        opt.onclick = null;
+      });
+
+      // If user did not answer, deduct mark
+      score -= 10;
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < quizData.length) {
+        loadQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      questionEl.textContent = "কুইজ শেষ হয়েছে!";
+      optionsEl.innerHTML = "";
+      timerEl.style.display = "none";
+      nextBtn.style.display = "none";
+
+      resultEl.style.display = "block";
+      resultEl.innerHTML = `
+        মোট সঠিক উত্তর: ${correctCount} টি<br>
+        সর্বমোট নম্বর: ${score} / ${quizData.length * 10}
+      `;
+
+      finalMessage.style.display = "block";
+      if (correctCount >= 6) {
+        finalMessage.textContent = "অভিনন্দন! তুমি কুইজে সফল হয়েছো!";
+        finalMessage.style.color = "#00ff00";
+      } else {
+        finalMessage.textContent = "দুঃখিত! তুমি কুইজে পরাজিত হয়েছো।";
+        finalMessage.style.color = "#ff4444";
+      }
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>
